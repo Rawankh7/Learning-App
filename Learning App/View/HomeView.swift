@@ -151,7 +151,7 @@ struct ContentView: View {
                             .glassEffect(.clear)
                     }
 
-                    Spacer().frame(height: 20)
+                   // Spacer().frame(height: 20)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 50)

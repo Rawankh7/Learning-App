@@ -2,7 +2,7 @@
 //  ActivityModel.swift
 //  Learning App
 //
-//  Created by rawan alkhaldi  on 30/04/1447 AH.
+//  Created by rawan alkhaldi on 30/04/1447 AH.
 //
 
 import Foundation

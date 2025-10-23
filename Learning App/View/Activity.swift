@@ -1,14 +1,13 @@
 import SwiftUI
 
-/// 🎨 الـ View: الواجهة التي تتفاعل مع المستخدم وتعرض بيانات الـ ViewModel.
 struct ActivityTopView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @State private var viewModel = ActivityViewModel()
+    @StateObject private var viewModel = ActivityViewModel()
     
     var body: some View {
         NavigationStack {
             VStack {
-                // MARK: - شريط العنوان
+                // MARK: - العنوان + الأزرار العلوية
                 HStack(spacing: 10) {
                     Text("Activity")
                         .font(.system(size: 34, weight: .bold))
@@ -16,19 +15,29 @@ struct ActivityTopView: View {
                     
                     Spacer()
                     
-                    Image(systemName: "calendar")
-                        .frame(width: 44, height: 44)
-                        .glassEffect(.clear)
-                        .foregroundStyle(Color.white.opacity(0.8))
-                        .font(.system(size: 25, weight: .semibold))
-                    
-                    Image(systemName: "pencil.and.outline")
-                        .frame(width: 44, height: 44)
-                        .glassEffect(.clear)
-                        .foregroundStyle(Color.white.opacity(0.8))
-                        .font(.system(size: 25, weight: .semibold))
+                    // 🗓️ زر الكالندر
+                    Button {
+                        viewModel.navigateTo(.calendar)
+                    } label: {
+                        Image(systemName: "calendar")
+                            .frame(width: 44, height: 44)
+                            .glassEffect(.clear)
+                            .foregroundStyle(.white.opacity(0.8))
+                            .font(.system(size: 25, weight: .semibold))
+                    }
+
+                    // ✏️ زر البينسل
+                    Button {
+                        viewModel.navigateTo(.edit)
+                    } label: {
+                        Image(systemName: "pencil.and.outline")
+                            .frame(width: 44, height: 44)
+                            .glassEffect(.clear)
+                            .foregroundStyle(.white.opacity(0.8))
+                            .font(.system(size: 25, weight: .semibold))
+                    }
                 }
-                .padding(.horizontal)
+                .padding()
                 
                 // MARK: - رأس الأسبوع
                 VStack(spacing: 12) {
@@ -86,6 +95,8 @@ struct ActivityTopView: View {
                         }
                     }
                     
+                   
+                    
                     Divider()
                         .background(Color.white.opacity(0.5))
                     
@@ -94,8 +105,14 @@ struct ActivityTopView: View {
                         .font(.system(size: 16, weight: .semibold))
                     
                     // MARK: - كبسولات الأنشطة
+                    
                     HStack {
+                        
                         Text("")
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 24))
+                        .foregroundColor(.orange)
+                            
                             .frame(width: 160, height: 69)
                             .background(Color("Act"))
                             .clipShape(Capsule())
@@ -109,7 +126,8 @@ struct ActivityTopView: View {
                     }
                 }
                 .padding()
-                .glassEffect(in: .rect(cornerRadius: 16.0))
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 
                 Spacer()
                 
@@ -121,9 +139,27 @@ struct ActivityTopView: View {
                         .font(.system(size: 45))
                         .bold()
                         .frame(width: 274, height: 274)
-                        .glassEffect(.clear)
-                        .background(Color("orange"))
+                        .background(Color("duration"))
                         .clipShape(Circle())
+                        .overlay(
+                            Circle().stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.orange.opacity(0.45),
+                                        Color.white.opacity(0.45),
+                                        Color.white.opacity(0.45),
+                                        Color.black.opacity(0.20),
+                                        Color.black.opacity(0.20),
+                                        Color.black.opacity(0.20),
+                                        Color.black.opacity(0.20),
+                                        Color.white.opacity(0.20),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1
+                            )
+                        )
                     
                     Spacer()
                     
@@ -134,27 +170,6 @@ struct ActivityTopView: View {
                             .foregroundColor(.white)
                             .background(Color("log"))
                             .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.orange.opacity(0.45),
-                                                Color.white.opacity(0.45),
-                                                Color.white.opacity(0.45),
-                                                Color.black.opacity(0.20),
-                                                Color.black.opacity(0.20),
-                                                Color.black.opacity(0.20),
-                                                Color.black.opacity(0.20),
-                                                Color.white.opacity(0.20),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottom
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            )
-                            .glassEffect(.clear)
                     }
                     
                     Text("1 out of 2 Freezes used")
@@ -162,6 +177,12 @@ struct ActivityTopView: View {
                         .foregroundColor(.gray)
                 }
                 .padding(.bottom, 40)
+            }
+            .navigationDestination(isPresented: $viewModel.showCalendarPage) {
+                CalendarPage()
+            }
+            .navigationDestination(isPresented: $viewModel.showEditPage) {
+                EditPage()
             }
             .navigationBarTitleDisplayMode(.inline)
         }
