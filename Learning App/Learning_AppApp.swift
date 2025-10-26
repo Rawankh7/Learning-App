@@ -12,6 +12,7 @@ struct Learning_AppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.dark) // ✅ فرض الوضع الداكن على كل الواجهات
         }
     }
 }

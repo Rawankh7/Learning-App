@@ -1,34 +1,33 @@
+//
+//  complete.swift
+//  Learning App
+//
+//  Created by rawan alkhaldi  on 03/05/1447 AH.
+//
+
 import SwiftUI
 
-// 💡 ملاحظة: يجب أن يكون ActivityViewModel يحتوي الآن على الدالة canLogLearnedToday (كما تم تحديثها سابقاً).
-
-struct ActivityView: View {
-    // ⭐️ يجب حقن الـ ViewModel في البيئة لتمكين CalendarView من استخدامه لاحقاً
+struct complete: View {
     @StateObject private var viewModel = ActivityViewModel()
-    // ❌ تم حذف @State private var isPressed لأنها لم تعد مستخدمة
 
-    var body: some View {
+var body: some View {
         NavigationStack {
             VStack {
                 header
                 weekHeader
                 Spacer()
                 bottomButtons
-            }
+              }
             .padding()
-            // 💡 تمرير الـ ViewModel إلى البيئة هنا لكي تستخدمه CalendarView و EditPage
-            .environmentObject(viewModel)
-            
             .navigationDestination(isPresented: $viewModel.showCalendarPage) {
-                // CalendarView الآن ستتمكن من الوصول لـ ViewModel
                 CalendarView()
             }
             .navigationDestination(isPresented: $viewModel.showEditPage) {
-                EditPage() // يجب تعريف EditPage()
+                EditPage()
             }
-            // ✅ الانتقال إلى صفحة الإكمال عندما يصبح التسلسل 7
-            .navigationDestination(isPresented: $viewModel.showCompletePage) {
-                complete()
+            // ✅ NEW: navigate to LearningGoalView
+            .navigationDestination(isPresented: $viewModel.showLearningGoalPage) {
+                LearningGoalView()
             }
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -37,16 +36,16 @@ struct ActivityView: View {
     // MARK: - Header
     private var header: some View {
         HStack(spacing: 10) {
-            Text ("Activity")
-                .font(.largeTitle.bold())
-                
-            // ... (بقية منطق Header) ...
+            Text("Activity")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(.white)
+
             Spacer()
 
             Button { viewModel.navigateTo(.calendar) } label: {
                 Image(systemName: "calendar")
                     .frame(width: 44, height: 44)
-                    .glassEffect(.clear)
+    .glassEffect(.clear)
                     .foregroundStyle(.white.opacity(0.8))
                     .font(.system(size: 25, weight: .semibold))
             }
@@ -64,7 +63,27 @@ struct ActivityView: View {
     // MARK: - Week Header
     private var weekHeader: some View {
         VStack(spacing: 12) {
-            // ... (منطق عرض الشهر وأزرار التنقل) ...
+            HStack {
+                Text(viewModel.currentWeekStart, format: .dateTime.month(.wide).year())
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+
+                Spacer()
+
+                HStack(spacing: 12) {
+                    Button { viewModel.moveWeek(by: -1) } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(Color("duration"))
+                    }
+
+                    Button { viewModel.moveWeek(by: 1) } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(Color("duration"))
+                    }
+                }
+            }
 
             // الأيام
             HStack(spacing: 12) {
@@ -84,29 +103,30 @@ struct ActivityView: View {
                             .background(
                                 Circle()
                                     .fill(bgColor)
-                                   .shadow(color: isSelected ? overlay : .clear, radius: 6, y: 2)
+                                    .shadow(color: isSelected ? overlay : .clear, radius: 6, y: 2)
                             )
-//                            .overlay(
-//                                Circle()
-//                                    .stroke(isSelected ? Color("duration") : Color.white.opacity(0.1), lineWidth: 0.8)
-//                            )
+                            .overlay(
+                                Circle()
+                                    .stroke(isSelected ? Color("duration") : Color.white.opacity(0.1), lineWidth: 0.8)
+                            )
                             .foregroundStyle(isSelected ? .white : .gray)
                             .onTapGesture { viewModel.selectDay(day.date) }
                     }
                 }
-                
             }
 
-            Divider().background(Color.white.opacity(0.5))
+            Divider().background(Color.gray.opacity(0.5))
 
-            Text("Learning Activity")
+            Text("Learning Swift")
+            // Changed "Learning Activity" to "Learning Swift" to match the image
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.system(size: 16, weight: .semibold))
 
             activityCapsules
         }
         .padding()
-        .glassEffect(in: .rect(cornerRadius: 16.0))
+      //  .background(.ultraThinMaterial)
+          .glassEffect(in: .rect(cornerRadius: 16.0))
     }
 
     // MARK: - كبسولات الأنشطة
@@ -140,59 +160,73 @@ struct ActivityView: View {
         VStack {
             Spacer()
 
-            // ⭐️ زر Learned Today: أصبح معطلاً بعد تسجيله لليوم الحالي (00:00 Reset)
-            Button {
-                viewModel.logLearned(for: viewModel.selectedDate)
-            } label: {
-                Text("Learned Today")
-                    .font(.system(size: 45)).bold()
-                    .frame(width: 274, height: 274)
+            // ----------------- الجزء الجديد من الصورة -----------------
+            VStack(spacing: 20) {
+                Image(systemName: "hands.and.sparkles.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(.orange)
+                
+                   
+
+                Text("Will done!")
+                    .font(.title2.bold())
                     .foregroundColor(.white)
-                    .background(Color("duration"))
-                    .clipShape(Circle())
-                    .overlay(
-                        // ... (تأثير الإطار) ...
-                        Circle().stroke(Color.white.opacity(0.2), lineWidth: 1) // تبسيط الإطار
-                    )
+
+                Text("Goal completed! start learning again or\nset new learning goal")
+                    .font(.subheadline)
+                    .foregroundStyle(.gray.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                
+
+               
             }
-            // ⭐️⭐️ شرط التعطيل الجديد ⭐️⭐️
-            .disabled(!viewModel.canLogLearnedToday)
-            .opacity(viewModel.canLogLearnedToday ? 1.0 : 0.4) // إظهار حالة التعطيل
-
             Spacer()
-
+            // ----------------- نهاية الجزء الجديد -----------------
+            
+          
             Button {
-                viewModel.logFreezed(for: viewModel.selectedDate)
+                // ✅ Navigate to LearningGoalView
+                viewModel.showLearningGoalPage = true
             } label: {
-                Text("Freezed Today")
+                Text("Set new learning goal") // هذا هو الزر الثاني القديم، تم تعديل نصه لكي لا يظهر مرتين بنفس النص
                     .font(.headline)
                     .frame(width: 274, height: 48)
                     .foregroundColor(.white)
-                    // 💡 تصحيح استخدام اللون: Color("Tef") بدلاً من Color.tef
-                    .background(viewModel.canFreeze() ? Color("log") : Color("Tef"))
+                    .background(viewModel.canFreeze() ? Color("duration") : Color.tef)
                     .clipShape(Capsule())
                     .overlay(
-                        // ... (تأثير الإطار) ...
-                        Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1) // تبسيط الإطار
+                        Capsule()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.orange.opacity(0.45),
+                                        Color.white.opacity(0.45),
+                                        Color.white.opacity(0.45),
+                                        Color.black.opacity(0.20),
+                                        Color.black.opacity(0.20),
+                                        Color.black.opacity(0.20),
+                                        Color.black.opacity(0.20),
+                                        Color.white.opacity(0.20),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1
+                            )
                     )
+                    .padding()
             }
-            .disabled(!viewModel.canFreeze())
+            
 
-            Text("\(viewModel.freezeCount) / \(viewModel.maxFreezes) Freezes used")
-                .font(.caption)
-                .foregroundColor(.gray)
+           Text("Set same learning goal and duration")
+                .foregroundColor(.duration)
         }
-       // .padding(.bottom, 40)
+        //.padding(.bottom, 40)
     }
 }
 
-// ----------------------------------------------------
-// 5. المعاينة (Preview)
-// ----------------------------------------------------
-
 #Preview("Dark Mode") {
-    // 💡 توفير ActivityViewModel للبيئة ليعمل preview
-    ActivityView()
-       .preferredColorScheme(.dark)
-        .environmentObject(ActivityViewModel())
+    complete()
+      .preferredColorScheme(.dark)
 }
+
