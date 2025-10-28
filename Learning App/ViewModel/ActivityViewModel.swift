@@ -1,119 +1,133 @@
 // ActivityViewModel.swift (يجب أن يكون في مجلد ViewModel)
 
+// ActivityViewModel.swift (الملف الموحد للـ ViewModels)
+
 import SwiftUI
-// ملاحظة: struct ActivityDay و enum DayStatus و Calendar extension موجودة الآن في ملف Model منفصل.
+import Combine
+
+// ⚠️ ملاحظة: يجب أن تكون struct ActivityDay, enum DayStatus, و extension Calendar
+// موجودة في ملفات Model منفصلة مثل Calendar.swift أو ActivityData.swift.
+
+// MARK: - Activity ViewModel (التحكم في الأهداف والأسبوع)
 
 final class ActivityViewModel: ObservableObject {
     
-   // final class ActivityViewModel: ObservableObject {
+    // MARK: - الخصائص
+    @Published var currentWeekStart: Date = Calendar.current.startOfWeek(for: Date())
+    @Published var selectedDate: Date = Date()
+    @Published var showCalendarPage = false
+    @Published var showEditPage = false
+    
+    // ✅ الخاصية الجديدة للتحكم في ظهور صفحة الإكمال
+    @Published var showCompletePage = false
+
+    // ✅ مفقودة سابقًا: لفتح صفحة "LearningGoalView"
+    @Published var showcomplete = false
+
+    // MARK: - أنشطة المستخدم (الأهداف المشتركة)
+    @Published var learnedStreak: Int = 0
+    @Published var freezeCount: Int = 0
+    @Published var points: Int = 0
+    @Published var dayStatuses: [Date: DayStatus] = [:]
+
+    let maxFreezes = 2
+    
+    // MARK: - Goal Completion Check
+    /// 🟢 يحدد ما إذا كان الهدف قد اكتمل (سنفترض 7 أيام)
+    var isGoalComplete: Bool {
+        return learnedStreak >= 7
+    }
+
+    // MARK: - Navigation
+    enum Destination { case calendar, edit }
+    
+    func navigateTo(_ destination: Destination) {
+        switch destination {
+        case .calendar: showCalendarPage = true
+        case .edit: showEditPage = true
+        }
+    }
+
+    // MARK: - الأسبوع والتواريخ
+    func moveWeek(by value: Int) {
+        if let newWeek = Calendar.current.date(byAdding: .weekOfYear, value: value, to: currentWeekStart) {
+            currentWeekStart = Calendar.current.startOfWeek(for: newWeek)
+        }
+    }
+
+    func selectDay(_ date: Date) {
+        selectedDate = date
+    }
+
+    var currentWeekDays: [ActivityDay] {
+        (0..<7).compactMap { offset in
+            guard let day = Calendar.current.date(byAdding: .day, value: offset, to: currentWeekStart) else { return nil }
+            return ActivityDay(date: day)
+        }
+    }
+
+    func isSelected(_ date: Date) -> Bool {
+        Calendar.current.isDate(date, inSameDayAs: selectedDate)
+    }
+    
+    // MARK: - View Helpers (للتحقق من حالة زر التعلم)
+    var canLogLearnedToday: Bool {
+        let calendar = Calendar.current
+        guard calendar.isDateInToday(selectedDate) else { return false }
+        let status = dayStatuses[selectedDate]
+        return status == nil || status == .none
+    }
+    
+    func dayStatus(for date: Date) -> DayStatus {
+        return dayStatuses[date] ?? .none
+    }
+
+    func dayColor(for date: Date) -> Color {
+        return dayStatus(for: date).color
+    }
+
+    func dayOverlay(for date: Date) -> Color {
+        return dayStatus(for: date).overlayColor
+    }
+    
+    // MARK: - تسجيل اليوم ومنع التكرار
+    func logLearned(for date: Date) {
+        guard canLogLearnedToday else { return }
         
-        // MARK: - الخصائص
-        @Published var currentWeekStart: Date = Calendar.current.startOfWeek(for: Date())
-        @Published var selectedDate: Date = Date()
-        @Published var showCalendarPage = false
-        @Published var showEditPage = false
-        @Published var showCompletePage = false   // ✅ needed for navigation to complete()
-        @Published var showLearningGoalPage = false // ✅ NEW: navigate to LearningGoalView
+        learnedStreak = 7 // 💡 تعيين مباشر لـ 7 لأغراض الاختبار/الإنجاز الفوري
+        points += 7
+        dayStatuses[date] = .learned
 
-        // MARK: - أنشطة المستخدم (الأهداف المشتركة)
-        @Published var learnedStreak: Int = 0
-        @Published var freezeCount: Int = 0
-        @Published var points: Int = 0
-        // DayStatus يتم الوصول إليها من ملف الـ Model
-        @Published var dayStatuses: [Date: DayStatus] = [:]
-
-        let maxFreezes = 2
-
-        // MARK: - Navigation
-        enum Destination { case calendar, edit }
-        func navigateTo(_ destination: Destination) {
-            switch destination {
-            case .calendar: showCalendarPage = true
-            case .edit: showEditPage = true
-            }
+        // ✅ افتح صفحة الإكمال فوراً
+        if learnedStreak >= 7 {
+            showCompletePage = true
         }
+    }
 
-        // MARK: - الأسبوع
-        func moveWeek(by value: Int) {
-            if let newWeek = Calendar.current.date(byAdding: .weekOfYear, value: value, to: currentWeekStart) {
-                currentWeekStart = Calendar.current.startOfWeek(for: newWeek)
-            }
-        }
-
-        func selectDay(_ date: Date) {
-            selectedDate = date
-        }
-
-        var currentWeekDays: [ActivityDay] {
-            (0..<7).compactMap { offset in
-                guard let day = Calendar.current.date(byAdding: .day, value: offset, to: currentWeekStart) else { return nil }
-                return ActivityDay(date: day)
-            }
-        }
-
-        func isSelected(_ date: Date) -> Bool {
-            Calendar.current.isDate(date, inSameDayAs: selectedDate)
-        }
-
-        // MARK: - View Helpers (للتحقق من حالة زر التعلم)
+    func logFreezed(for date: Date) {
+        let calendar = Calendar.current
+        guard calendar.isDateInToday(selectedDate) else { return }
         
-        /// 🟢 المنطق الجديد: يحدد ما إذا كان الزر يجب أن يكون متاحاً للضغط.
-        var canLogLearnedToday: Bool {
-            let calendar = Calendar.current
-            
-            // 1. يجب أن يكون اليوم المحدد هو اليوم الحالي.
-            guard calendar.isDateInToday(selectedDate) else {
-                return false
-            }
-            
-            // 2. يجب ألا يكون قد تم تسجيل أي نشاط (تعلم أو تجميد) لليوم الحالي.
-            let status = dayStatuses[selectedDate]
-            return status == nil || status == .none
-        }
+        guard freezeCount < maxFreezes else { return }
+        freezeCount += 1
+        dayStatuses[date] = .freezed
+    }
+
+    func canFreeze() -> Bool {
+        let calendar = Calendar.current
+        guard calendar.isDateInToday(selectedDate) else { return false }
         
-        func dayStatus(for date: Date) -> DayStatus {
-            return dayStatuses[date] ?? .none
-        }
+        return freezeCount < maxFreezes && (dayStatuses[selectedDate] == nil || dayStatuses[selectedDate] == .none)
+    }
+}
 
-        func dayColor(for date: Date) -> Color {
-            return dayStatus(for: date).color
-        }
+// ----------------------------------------------------
+// ⚠️ ViewModels المدمجة (تحتاج إلى إزالتها إذا كانت موجودة كملفات منفصلة)
+// ----------------------------------------------------
 
-        func dayOverlay(for date: Date) -> Color {
-            return dayStatus(for: date).overlayColor
-        }
-        
-        // MARK: - تسجيل اليوم
-        func logLearned(for date: Date) {
-            let calendar = Calendar.current
+// [تم إزالة محتوى CalendarViewModel و LearningViewModel المرفق لتوحيد ActivityViewModel]
 
-            // امنع التكرار لنفس اليوم (يمكنك إزالة هذا الشرط إذا أردت السماح بإعادة الضغط)
-            guard calendar.isDateInToday(date) && (dayStatuses[date] == nil || dayStatuses[date] == .none) else {
-                return
-            }
-            
-            // ✅ اجعل التسلسل يصبح 7 مباشرة عند أول ضغط
-            learnedStreak = 7
-            points += 7
-            dayStatuses[date] = .learned
-
-            // ✅ افتح صفحة الإكمال فوراً عندما يكون التسلسل 7 بالضبط
-            showCompletePage = (learnedStreak == 7)
-        }
-
-        func logFreezed(for date: Date) {
-            guard freezeCount < maxFreezes else { return }
-            freezeCount += 1
-            dayStatuses[date] = .freezed
-        }
-
-        func canFreeze() -> Bool {
-            let calendar = Calendar.current
-            guard calendar.isDateInToday(selectedDate) else { return false }
-            
-            return freezeCount < maxFreezes && (dayStatuses[selectedDate] == nil || dayStatuses[selectedDate] == .none)
-        }
-    }// HOME PAGE
+// HOME PAGE
 class LearningViewModel: ObservableObject {
     @Published var goal = LearningGoal()
     var isGoalTextFocused = false
@@ -184,6 +198,33 @@ class CalendarViewModel: ObservableObject {
     
     func dayOfWeekHeaders() -> [String] {
         ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    }
+}
+
+class EditGoalViewModel: ObservableObject {
+    // الخصائص المنشورة (Published) التي تراقبها الواجهة
+    @Published var goalText: String = ""
+    @Published var selectedDuration: Duration = .month // الحالة الافتراضية "Month" كما في الكود الأصلي
+
+    // منطق الأعمال (Business Logic)
+    
+    // الإجراء الذي يتم استدعاؤه عند الضغط على زر المدة
+    func selectDuration(_ duration: Duration) {
+        selectedDuration = duration
+        print("\(duration.rawValue) selected!")
+    }
+    
+    // دالة لحفظ الهدف (يمكن تطويرها لاحقًا لإرسال البيانات)
+    func saveGoal() {
+        print("Saving Goal: \(goalText) with duration \(selectedDuration.rawValue)")
+        // هنا يمكن إضافة منطق الحفظ إلى قاعدة البيانات أو تمرير البيانات
+    }
+    
+    // خصائص مساعدة للعرض (View Helpers)
+    
+    // دالة لتحديد ما إذا كانت مدة معينة هي المدة المختارة حاليًا
+    func isDurationSelected(_ duration: Duration) -> Bool {
+        return selectedDuration == duration
     }
 }
 

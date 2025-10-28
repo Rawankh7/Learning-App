@@ -26,8 +26,8 @@ var body: some View {
                 EditPage()
             }
             // ✅ NEW: navigate to LearningGoalView
-            .navigationDestination(isPresented: $viewModel.showLearningGoalPage) {
-                LearningGoalView()
+            .navigationDestination(isPresented: $viewModel.showcomplete) {
+                EditPage()
             }
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -126,7 +126,7 @@ var body: some View {
         }
         .padding()
       //  .background(.ultraThinMaterial)
-          .glassEffect(in: .rect(cornerRadius: 16.0))
+          .glassEffect(in: RoundedRectangle(cornerRadius: 16.0))
     }
 
     // MARK: - كبسولات الأنشطة
@@ -186,7 +186,7 @@ var body: some View {
           
             Button {
                 // ✅ Navigate to LearningGoalView
-                viewModel.showLearningGoalPage = true
+                viewModel.showcomplete = true
             } label: {
                 Text("Set new learning goal") // هذا هو الزر الثاني القديم، تم تعديل نصه لكي لا يظهر مرتين بنفس النص
                     .font(.headline)

@@ -20,7 +20,7 @@ struct ActivityView: View {
             .environmentObject(viewModel)
             
             .navigationDestination(isPresented: $viewModel.showCalendarPage) {
-                // CalendarView الآن ستتمكن من الوصول لـ ViewModel
+                // CalendarView   الوصول ل
                 CalendarView()
             }
             .navigationDestination(isPresented: $viewModel.showEditPage) {
@@ -32,6 +32,7 @@ struct ActivityView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
         }
+        
     }
 
     // MARK: - Header
@@ -94,7 +95,6 @@ struct ActivityView: View {
                             .onTapGesture { viewModel.selectDay(day.date) }
                     }
                 }
-                
             }
 
             Divider().background(Color.white.opacity(0.5))
@@ -107,6 +107,8 @@ struct ActivityView: View {
         }
         .padding()
         .glassEffect(in: .rect(cornerRadius: 16.0))
+//        .glassEffect(.clear)
+//        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - كبسولات الأنشطة
@@ -182,7 +184,7 @@ struct ActivityView: View {
                 .font(.caption)
                 .foregroundColor(.gray)
         }
-       // .padding(.bottom, 40)
+        .padding(.bottom, 40)
     }
 }
 

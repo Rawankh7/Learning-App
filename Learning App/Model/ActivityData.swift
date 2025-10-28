@@ -1,7 +1,7 @@
 // Calendar.swift (الملف الأساسي للـ Model)
 
 import Foundation
-import SwiftUI // 💡 تم إضافته لتمكين استخدام نوع Color
+import SwiftUI // ضروري لـ DayStatus.color
 
 /// 🧱 الـ Model: يمثل البيانات الأساسية ليوم نشاط.
 struct ActivityDay: Identifiable {
@@ -13,7 +13,6 @@ struct ActivityDay: Identifiable {
 enum DayStatus {
     case none, learned, freezed
 
-    // 🎨 يتم تعريف الألوان هنا
     var color: Color {
         switch self {
         case .none: return Color(.secondarySystemBackground)
@@ -38,3 +37,23 @@ extension Calendar {
         return self.date(from: comps) ?? date
     }
 }
+
+enum Duration: String, CaseIterable {
+    case week = "Week"
+    case month = "Month"
+    case year = "Year"
+}
+
+enum Period: String, CaseIterable, Identifiable {
+    case week = "Week"
+    case month = "Month"
+    case year = "Year"
+
+    var id: String { self.rawValue }
+}
+
+struct LearningGoal {
+    var text: String = ""
+    var selectedPeriod: Period? = nil
+}
+
